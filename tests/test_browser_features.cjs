@@ -1,0 +1,88 @@
+/* Run against ui_fixture_server.py only: synthetic providers, ephemeral history. */
+const { chromium } = require("playwright");
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+
+(async () => {
+  const browser = await chromium.launch({ headless: true, channel: "msedge" });
+  const context = await browser.newContext({ viewport: { width: 1365, height: 900 }, timezoneId: "Asia/Bangkok" });
+  const page = await context.newPage();
+  const errors = [], checks = [], ocrRequests = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("dialog", (dialog) => void dialog.accept());
+  page.on("request", (request) => {
+    if (request.url().endsWith("/api/check") && request.method() === "POST") checks.push(request.postDataJSON());
+    if (request.url().endsWith("/api/ocr") && request.method() === "POST") ocrRequests.push(request);
+  });
+  fs.mkdirSync(".test-runtime/feature-ui", { recursive: true });
+  try {
+    await page.goto("http://127.0.0.1:8012");
+    await page.waitForFunction(() => window.ScamFeatures);
+    await page.locator("#message").fill("แจ้งจากผู้ส่ง: ส่งรหัส OTP ตอนนี้ <script>alert(1)</script>");
+    await page.locator("#submit-button").click();
+    await page.locator("#report").waitFor({ state: "visible" });
+    assert.equal(await page.locator("#risk-score").innerText(), "68");
+    assert((await page.locator("#highlight-text").innerText()).includes("<script>"));
+    await page.locator("#highlight-text .highlight-mark").first().click();
+    assert((await page.locator("#highlight-reason").innerText()).includes("ข้อมูลส่วนตัว"));
+    await page.locator("#save-report").click();
+    await page.getByRole("button", { name: "บันทึกแล้ว", exact: true }).waitFor();
+    await page.screenshot({ path: ".test-runtime/feature-ui/desktop-report.png", fullPage: true });
+    await page.locator("#nav-history").click();
+    await page.locator(".history-item").waitFor();
+    await page.getByRole("button", { name: "☆ ทำรายการสำคัญ" }).click();
+    await page.getByRole("button", { name: "★ สำคัญ" }).waitFor();
+    await page.locator("#history-query").fill("ส่งรหัส OTP");
+    await page.locator("#history-starred").check();
+    await page.locator("#history-filters button").click();
+    await page.locator(".history-item").waitFor();
+    const checkCount = checks.length;
+    await page.getByRole("button", { name: "เปิดรายงาน", exact: true }).click();
+    await page.locator("#history-dialog").waitFor({ state: "visible" });
+    assert((await page.locator("#history-detail").innerText()).includes("68/100"));
+    assert.equal(checks.length, checkCount, "Opening history must not start analysis");
+    await page.locator("#close-history-dialog").click();
+    await page.screenshot({ path: ".test-runtime/feature-ui/desktop-history.png", fullPage: true });
+    await page.locator("#nav-check").click();
+    await page.locator("#message").fill("ฉบับร่างที่ต้องเก็บไว้");
+    await page.locator("#nav-history").click();
+    await page.locator(".history-item").waitFor();
+    await page.getByRole("button", { name: "เปิดรายงาน", exact: true }).click();
+    await page.locator("#history-dialog").waitFor({ state: "visible" });
+    await page.locator("#close-history-dialog").click();
+    await page.locator("#nav-check").click();
+    assert.equal(await page.locator("#message").inputValue(), "ฉบับร่างที่ต้องเก็บไว้");
+    await page.locator("#clear-button").click();
+    await page.locator("#tab-image").click();
+    // Small valid synthetic PNG, without user data.
+    await page.locator("#image-file").setInputFiles({ name: "test.png", mimeType: "image/png", buffer: fs.readFileSync(".test-runtime/feature-ui/input.png") });
+    await page.locator("#ocr-button").click();
+    await page.waitForFunction(() => sessionStorage.getItem("scamchecker-ocr-job"));
+    await page.reload();
+    await page.waitForFunction(() => document.getElementById("message").value.includes("ส่งรหัส OTP"));
+    assert.equal(ocrRequests.length, 1, "Refresh must follow the same OCR job");
+    await page.locator("#message").fill("ฉบับแก้ไข: ส่งรหัส OTP พร้อมข้อความเพิ่มเติม");
+    await page.locator("#submit-button").click();
+    await page.locator("#report").waitFor({ state: "visible" });
+    assert.equal(checks.at(-1).source_type, "image");
+    assert(checks.at(-1).message.startsWith("ฉบับแก้ไข"));
+    await page.locator("#save-report").click();
+    await page.getByRole("button", { name: "บันทึกแล้ว", exact: true }).waitFor();
+    await page.locator("#submit-button").click();
+    await page.waitForFunction(() => sessionStorage.getItem("scamchecker-active-job"));
+    await page.reload();
+    await page.locator("#report").waitFor({ state: "visible" });
+    assert((await page.locator("#message").inputValue()).startsWith("ฉบับแก้ไข"), "Refresh must restore the input of a completed check");
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: ".test-runtime/feature-ui/mobile-image-report.png", fullPage: true });
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), "Mobile page must not overflow");
+    await page.locator("#nav-history").click();
+    await page.locator(".history-item").first().waitFor();
+    await page.screenshot({ path: ".test-runtime/feature-ui/mobile-history.png", fullPage: true });
+    await page.locator("#clear-history").click();
+    await page.waitForFunction(() => document.getElementById("history-status").textContent.includes("ยังไม่มีรายการ"));
+    assert.equal(await page.locator(".history-item").count(), 0);
+    assert.deepEqual(errors, []);
+    console.log("PASS: report, highlights, XSS-safe text, save, search, bookmark, history without API reanalysis, draft preservation, OCR refresh, edited-image analysis, mobile layout and delete-all");
+  } finally { await browser.close(); }
+})().catch((error) => { console.error(error); process.exitCode = 1; });

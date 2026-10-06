@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8f5">
+  <meta name="description" content="ตรวจข้อความและลิงก์น่าสงสัยด้วย Gemini, Knowledge Base และ VirusTotal พร้อมเหตุผลและหลักฐาน">
+  <title>Scam Checker — ตรวจข้อความก่อนตัดสินใจ</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/features.css">
+  <script src="/app.js" defer></script>
+  <script src="/features.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#message">ข้ามไปช่องตรวจข้อความ</a>
+  <div class="page-shell">
+    <div class="navigation-shell">
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Scam Checker หน้าหลัก">
+        <span class="brand-mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.4 3.2 7.7 7.5 9.5 4.3-1.8 7.5-5.1 7.5-9.5V6L12 3Z"/><path d="m8.5 12 2.3 2.3 4.7-4.8"/></svg></span>
+        <span>scam<span class="brand-light">checker</span><span class="brand-dot">.</span></span>
+      </a>
+      <nav class="main-nav" aria-label="เมนูหลัก"><button id="nav-guidance" class="nav-button" type="button" aria-pressed="false" aria-controls="guidance-panel">คำแนะนำและคำเตือน</button><button id="nav-check" class="nav-button active" type="button" aria-pressed="true" aria-controls="check-workspace">ตรวจสอบ</button><button id="nav-history" class="nav-button" type="button" aria-pressed="false" aria-controls="history-panel">ประวัติ</button><a class="help-link" href="#how-it-works">วิธีอ่านผล</a></nav>
+    </header>
+    <aside id="scam-notice" class="scam-notice" role="alert" aria-atomic="true" hidden>
+      <span class="scam-notice-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 2 21h20L12 3Z"/><path d="M12 9v5m0 3v.1"/></svg></span>
+      <div class="scam-notice-copy"><strong id="scam-notice-title"></strong><p id="scam-notice-detail"></p></div>
+      <a class="scam-notice-link" href="#risk-title">ดูผลและหลักฐาน <span aria-hidden="true">↗</span></a>
+    </aside>
+    </div>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow"><span class="tiny-dot"></span> A LITTLE CHECK. A SAFER CHOICE.</p>
+          <h1 id="page-title">ตรวจข้อความ<span>ก่อนตัดสินใจ</span></h1>
+          <p class="intro-copy">ข้อความนี้เชื่อได้แค่ไหน? ให้ AI ช่วยดูบริบทและตรวจลิงก์<br class="desktop-break"> พร้อมอธิบายเหตุผลที่คุณตรวจสอบต่อได้</p>
+        </div>
+        <div class="intro-note"><span class="note-line"></span><p>หยุดสักนิด<br><strong>ก่อนคลิกหรือโอน</strong></p></div>
+      </section>
+
+      <section id="check-workspace" class="workspace" aria-label="ตรวจข้อความและดูผล">
+        <div class="input-column">
+          <form id="check-form" class="input-card">
+            <div class="card-heading"><div><span class="step-label">01 / ข้อความของคุณ</span><h2><label for="message">วางข้อความที่สงสัย</label></h2></div><span class="input-tag">SMS · LINE · EMAIL</span></div>
+            <div class="input-tabs" aria-label="ที่มาข้อความ"><button id="tab-text" type="button" class="active" aria-pressed="true">วางข้อความ</button><button id="tab-image" type="button" aria-pressed="false">ภาพหน้าจอ</button></div>
+            <section id="image-panel" class="image-panel" aria-label="อ่านข้อความจากภาพ" hidden>
+              <label id="image-drop" class="image-drop" for="image-file"><strong>เลือกหรือลากภาพหน้าจอมาที่นี่</strong><span>PNG · JPEG · WebP / ครั้งละ 1 ภาพ / ไม่เกิน 5 MiB</span></label>
+              <input id="image-file" type="file" accept="image/png,image/jpeg,image/webp" aria-label="เลือกภาพหน้าจอ">
+              <img id="image-preview" alt="ภาพหน้าจอที่เลือก" hidden>
+              <div class="image-actions"><button id="ocr-button" class="secondary-button" type="button" disabled>อ่านข้อความจากภาพ</button><button id="remove-image" class="clear-button" type="button" disabled>ลบภาพ</button></div>
+              <p class="feature-note">เมื่อกดอ่านข้อความ ภาพจะส่งให้ Gemini ไม่เก็บภาพต้นฉบับในประวัติ</p>
+              <p id="ocr-status" class="feature-status" role="status" aria-live="polite"></p><ul id="ocr-warnings" class="feature-note"></ul>
+            </section>
+            <p id="source-note" class="feature-note" hidden></p>
+            <div class="textarea-wrap"><textarea id="message" name="message" rows="7" required aria-describedby="input-hint char-count source-note" placeholder="เช่น คุณได้รับสิทธิ์รับเงินคืน กรุณายืนยันข้อมูลผ่านลิงก์ภายในวันนี้..."></textarea><div class="input-bottom"><span id="input-hint">ใส่ข้อความและลิงก์ได้ สูงสุด 3 ลิงก์</span><span id="char-count">0 / 4,000</span></div></div>
+            <div class="example-section"><p>ยังไม่มีข้อความ? ลองตัวอย่าง</p><div class="example-buttons"><button type="button" class="example-button" data-example="otp">ขอรหัส OTP <span>↗</span></button><button type="button" class="example-button" data-example="reward">หลอกรับรางวัล <span>↗</span></button><button type="button" class="example-button" data-example="normal">ข้อความทั่วไป <span>↗</span></button></div></div>
+            <div class="form-actions"><button id="submit-button" type="submit" class="primary-button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><span>ตรวจสอบข้อความ</span><span class="button-arrow">→</span></button><button id="clear-button" type="button" class="clear-button" disabled>ล้างข้อความ</button></div>
+            <p class="keyboard-hint"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> เพื่อเริ่มตรวจ <span>ไม่ต้องสมัครบัญชี</span></p>
+          </form>
+          <div class="privacy-note"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg><p>ข้อความส่งให้ Gemini และลิงก์ส่งให้ VirusTotal ผลอยู่ชั่วคราว 15 นาที<br>เมื่อกดบันทึก ข้อความและรายงานจะเก็บใน Supabase บนคลาวด์</p></div>
+        </div>
+
+        <section id="result-region" class="result-column" aria-label="ผลการตรวจสอบ" aria-busy="false">
+          <div class="result-heading"><span class="step-label">02 / ผลการตรวจสอบ</span><span id="connection-status" class="connection-status"><span class="status-dot"></span><span>กำลังเชื่อมต่อ</span></span></div>
+          <div id="empty-state" class="empty-state"><div class="empty-symbol"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 8 13 16v14c0 11 8 20 19 25 11-5 19-14 19-25V16L32 8Z"/><path d="m24 31 6 6 11-12"/></svg><span class="orbit-dot"></span></div><h2>เช็กสักนิด สบายใจขึ้น</h2><p>วางข้อความทางซ้าย แล้วกดตรวจสอบ<br>ผลวิเคราะห์และเหตุผลจะปรากฏที่นี่</p><div class="empty-divider"></div><div class="provider-list"><span>Gemini <small>วิเคราะห์บริบท</small></span><span>Knowledge Base <small>เทียบคำในฐานข้อมูล</small></span><span>VirusTotal <small>ตรวจลิงก์</small></span></div></div>
+          <div id="loading-state" class="loading-state" hidden><div class="loading-orb" aria-hidden="true"></div><p class="eyebrow">กำลังตรวจสอบ</p><h2 id="loading-title" role="status">กำลังอ่านข้อมูลในข้อความ</h2><p id="loading-detail">ระบบกำลังเริ่มตรวจสอบข้อความของคุณ</p><progress id="loading-progress" max="100" value="10" aria-label="ขั้นตอนการตรวจสอบ"></progress><ol class="stage-list"><li data-stage="links"><span>1</span>ตรวจลิงก์</li><li data-stage="knowledge_base"><span>2</span>เทียบฐานข้อมูล</li><li data-stage="ai"><span>3</span>วิเคราะห์บริบท</li><li data-stage="scoring"><span>4</span>สรุปผล</li></ol><p class="loading-footnote">ลิงก์ใหม่หรือข้อจำกัด API อาจทำให้ใช้เวลานานขึ้น</p></div>
+          <div id="error-state" class="error-state" role="alert" hidden><span class="error-symbol">!</span><h2>ยังตรวจสอบไม่สำเร็จ</h2><p id="error-message"></p><button id="retry-button" class="secondary-button" type="button">ลองอีกครั้ง <span>↗</span></button></div>
+          <div id="report" hidden>
+            <div id="risk-card" class="risk-card"><div class="risk-top"><span id="risk-badge" class="risk-badge"></span><span class="report-label">ผลจากข้อความนี้</span></div><div class="score-row"><div><h2 id="risk-title" tabindex="-1"></h2><p id="scam-type"></p></div><div class="score"><span id="risk-score"></span><small>/ 100</small></div></div><progress id="risk-meter" max="100" value="0" aria-label="คะแนนความเสี่ยงรวม"></progress><div class="scale-labels"><span>ต่ำ</span><span>ปานกลาง</span><span>สูง</span></div><p id="risk-advice" class="risk-advice"></p><p class="score-note">คะแนนความเสี่ยงตามเกณฑ์ ไม่ใช่เปอร์เซ็นต์ความแม่นยำ</p></div>
+            <div id="partial-warning" class="partial-warning" role="status" hidden></div>
+            <div class="source-card"><div class="section-heading"><h3>จุดที่ใช้ประกอบการประเมิน</h3><label class="highlight-switch"><input id="highlight-toggle" type="checkbox" checked> ไฮไลต์</label></div><p class="feature-note">เลือกข้อความที่มีสีเพื่ออ่านเหตุผล สีระบุหมวดหลักฐาน</p><div id="highlight-legend" class="highlight-legend"></div><div id="highlight-text" class="highlight-text"></div><div id="highlight-reason" class="highlight-reason" role="status" aria-live="polite"></div><p id="highlight-note" class="feature-note"></p></div>
+            <div class="analysis-card"><div class="section-heading"><h3>ทำไมถึงได้ผลนี้?</h3><span id="ai-score" class="quiet-tag"></span></div><p id="ai-summary" class="summary-text"></p><details id="evidence-details" class="evidence-details"><summary>ดูหลักฐานและคะแนนย่อย <span>+</span></summary><div id="evidence-list"></div></details><details class="reason-details"><summary>เหตุผลของคะแนนรวม <span>+</span></summary><ul id="risk-reasons" class="risk-reasons"></ul></details></div>
+            <div class="source-card"><div class="section-heading"><h3>Knowledge Base</h3><span id="kb-score" class="quiet-tag"></span></div><p id="kb-summary"></p><div id="kb-phrases" class="phrase-list"></div></div>
+            <div class="source-card"><div class="section-heading"><h3>ลิงก์ในข้อความ</h3><span id="url-count" class="quiet-tag"></span></div><div id="url-results"></div></div>
+            <p id="report-time" class="report-time"></p>
+            <div class="save-panel"><button id="save-report" class="secondary-button" type="button" disabled>บันทึกผลนี้</button><p id="save-status" class="feature-note" role="status">กำลังตรวจการตั้งค่าประวัติ</p></div>
+          </div>
+        </section>
+      </section>
+
+      <section id="history-panel" class="history-panel" aria-labelledby="history-title" hidden>
+        <div class="history-heading"><div><p class="step-label">ผลที่คุณเลือกบันทึก</p><h2 id="history-title" tabindex="-1">ประวัติการตรวจสอบ</h2><p class="feature-note">ประวัติร่วมของแอปนี้ เก็บใน Supabase เปิดผลเดิมโดยไม่เรียก AI ซ้ำ</p></div><button id="clear-history" class="danger-button" type="button">ล้างประวัติ</button></div>
+        <form id="history-filters" class="history-filters"><label>ค้นหาข้อความ<input id="history-query" type="search" maxlength="200" placeholder="คำในข้อความที่เคยตรวจ"></label><label>ระดับความเสี่ยง<select id="history-level"><option value="">ทุกระดับ</option><option>ต่ำ</option><option>ปานกลาง</option><option>สูง</option><option value="ไม่สามารถประเมินได้">ยังประเมินไม่ได้</option></select></label><label>ตั้งแต่วันที่<input id="history-start" type="date"></label><label>ถึงวันที่<input id="history-end" type="date"></label><label class="star-filter"><input id="history-starred" type="checkbox"> รายการสำคัญ</label><button class="secondary-button" type="submit">ค้นหา</button></form>
+        <p id="history-status" class="feature-status" role="status" aria-live="polite"></p><div id="history-list" class="history-list"></div>
+        <div class="history-pagination"><button id="history-prev" class="secondary-button" type="button" disabled>ก่อนหน้า</button><span id="history-page"></span><button id="history-next" class="secondary-button" type="button" disabled>ถัดไป</button></div>
+      </section>
+
+      <section id="guidance-panel" class="guidance-panel" aria-labelledby="guidance-title" hidden>
+        <div class="guide-hero">
+          <div><p class="eyebrow"><span class="tiny-dot"></span> KNOW THE SIGNS. PAUSE BEFORE YOU ACT.</p><h1 id="guidance-title" tabindex="-1">รู้ทันข้อความ<span>หลอกลวง</span></h1><p class="guide-lead">ก่อนตอบ ก่อนคลิก ก่อนโอน — สังเกตสัญญาณเหล่านี้<br>ชื่อผู้ส่งและหน้าตาที่น่าเชื่อถืออาจถูกปลอมได้</p></div>
+          <button id="guide-check" class="secondary-button" type="button">มีข้อความสงสัย? ไปตรวจสอบ <span aria-hidden="true">↗</span></button>
+        </div>
+        <div class="guide-principle"><span aria-hidden="true">!</span><p><strong>อย่าส่งรหัส OTP, PIN หรือรหัสผ่านให้ผู้อื่น</strong><br>หากมีคนขอข้อมูลลับหรือให้ทำรายการผ่านลิงก์ในข้อความ ให้หยุดและยืนยันกับหน่วยงานผ่านช่องทางทางการก่อน</p></div>
+        <div class="guide-section-heading"><p class="step-label">01 / สัญญาณที่ควรระวัง</p><h2>เจอแบบนี้ ให้หยุดคิดก่อน</h2></div>
+        <div class="guide-signs">
+          <article class="guide-card"><span class="guide-number">01</span><h3>ขอข้อมูลลับหรือรหัส OTP</h3><p>อ้างว่าต้องใช้รหัสเพื่อปลดล็อกบัญชี ยืนยันตัวตน หรือคืนเงิน ข้อมูลเหล่านี้อาจถูกนำไปใช้เข้าถึงบัญชีของคุณ</p><span class="guide-tag">ขอข้อมูลส่วนตัว</span></article>
+          <article class="guide-card"><span class="guide-number">02</span><h3>ให้โอนเงินก่อนรับสิทธิ์</h3><p>อ้างรางวัล เงินคืน หรือผลตอบแทน แล้วให้จ่ายค่าธรรมเนียมหรือเงินมัดจำก่อน ควรตรวจสอบที่มาของข้อเสนอให้ชัดเจน</p><span class="guide-tag">หลอกให้จ่ายเงิน</span></article>
+          <article class="guide-card"><span class="guide-number">03</span><h3>เร่งให้ทำทันที หรือข่มขู่</h3><p>ใช้คำว่า “ภายใน 5 นาที” “บัญชีจะถูกระงับ” หรือ “มีคดีความ” เพื่อให้ตกใจและไม่มีเวลาตรวจสอบผู้ส่ง</p><span class="guide-tag">กดดันให้ตัดสินใจ</span></article>
+          <article class="guide-card"><span class="guide-number">04</span><h3>ให้กดลิงก์หรือติดตั้งแอป</h3><p>เว็บไซต์อาจเลียนแบบหน่วยงานจริง ชื่อผู้ส่ง โลโก้ และการมี HTTPS ไม่ได้ยืนยันว่าเป็นของจริง อย่าติดตั้งแอปตามคำแนะนำของคนที่ยังไม่ได้ยืนยันตัวตน</p><span class="guide-tag">ลิงก์หรือแอปปลอม</span></article>
+        </div>
+        <p class="guide-source-note">อ่านเรื่องการปลอมผู้ส่ง ลิงก์ และการขโมยรหัสเพิ่มเติมจาก <a href="https://www.bot.or.th/th/satang-story/fraud/online-fraud.html" target="_blank" rel="noopener noreferrer">ธนาคารแห่งประเทศไทย ↗</a></p>
+        <div class="guide-section-heading"><p class="step-label">02 / ตัวอย่างข้อความ</p><h2>กลโกงเปลี่ยนคำ แต่ใช้วิธีคล้ายกัน</h2><p>ตัวอย่างต่อไปนี้สร้างขึ้นเพื่ออธิบายสัญญาณเตือน ไม่ใช่ข้อความจากผู้ส่งจริง</p></div>
+        <div class="guide-examples">
+          <article class="guide-example"><span class="guide-tag">แอบอ้างธนาคาร</span><blockquote>“บัญชีของคุณถูกระงับ ส่งรหัส OTP ให้เจ้าหน้าที่ภายใน 5 นาทีเพื่อปลดล็อก”</blockquote><p><strong>จุดที่ควรระวัง:</strong> ขอรหัสลับ พร้อมใช้ความกลัวและเวลามากดดัน</p></article>
+          <article class="guide-example"><span class="guide-tag">หลอกรับรางวัล</span><blockquote>“คุณได้รับรางวัล 50,000 บาท โอนค่าธรรมเนียม 500 บาทก่อนรับเงินภายในวันนี้”</blockquote><p><strong>จุดที่ควรระวัง:</strong> ให้จ่ายเงินล่วงหน้าเพื่อแลกกับรางวัลที่ยังไม่ได้ยืนยัน</p></article>
+          <article class="guide-example"><span class="guide-tag">แอบอ้างบริการจัดส่ง</span><blockquote>“พัสดุจัดส่งไม่สำเร็จ กดลิงก์ในข้อความเพื่อแก้ที่อยู่และชำระค่าจัดส่งใหม่”</blockquote><p><strong>จุดที่ควรระวัง:</strong> พาไปกรอกข้อมูลหรือจ่ายเงินผ่านช่องทางที่ผู้ส่งเลือกให้</p></article>
+        </div>
+        <div class="guide-section-heading"><p class="step-label">03 / รับมืออย่างไร</p><h2>เมื่อเจอข้อความน่าสงสัย</h2></div>
+        <ol class="guide-actions"><li><span>1</span><div><h3>หยุดการตอบและทำรายการ</h3><p>ยังไม่คลิกลิงก์ ไม่โอนเงิน ไม่ส่งข้อมูลลับ และไม่ติดตั้งแอปตามข้อความนั้น</p></div></li><li><span>2</span><div><h3>ยืนยันผ่านช่องทางที่คุณหาเอง</h3><p>เปิดแอปหรือเว็บไซต์ทางการ หรือติดต่อหน่วยงานจากเบอร์ที่ตรวจสอบได้ ไม่ใช้เบอร์หรือลิงก์ที่ข้อความน่าสงสัยส่งมา</p></div></li><li><span>3</span><div><h3>เก็บหลักฐาน แล้วตรวจสอบต่อ</h3><p>เก็บภาพข้อความ ชื่อบัญชี ช่องทางติดต่อ และรายละเอียดการทำรายการไว้ ใช้ผลจาก Scam Checker เป็นข้อมูลประกอบการตรวจสอบผู้ส่ง</p></div></li></ol>
+        <aside class="guide-help" aria-labelledby="guide-help-title"><div><p class="step-label">หากถูกหลอกให้โอนเงินแล้ว</p><h2 id="guide-help-title">รีบติดต่อธนาคาร และ AOC 1441</h2><p>ติดต่อธนาคารผ่านช่องทางทางการโดยเร็ว และแจ้ง AOC เพื่อประสานงานเกี่ยวกับเหตุหลอกลวงออนไลน์ เตรียมหลักฐานและรายละเอียดการโอนเงิน</p><a class="guide-source-note" href="https://www.mdes.go.th/news/detail/10564" target="_blank" rel="noopener noreferrer">ข้อมูลจากกระทรวงดิจิทัลเพื่อเศรษฐกิจและสังคม ↗</a></div><a class="guide-call" href="tel:1441"><span>สายด่วน AOC</span><strong>1441</strong><small>กดเพื่อโทร</small></a></aside>
+        <div class="guide-section-heading"><p class="step-label">คำถามที่พบบ่อย</p><h2>เข้าใจผลก่อนตัดสินใจ</h2></div>
+        <div class="guide-faq"><details><summary>คะแนนความเสี่ยงต่ำ แปลว่าปลอดภัยแน่นอนหรือไม่?</summary><p>ไม่ใช่ คะแนนต่ำหมายถึงระบบยังไม่พบสัญญาณเด่นชัดจากข้อมูลที่ตรวจได้ กลโกงใหม่หรือผลตรวจที่ไม่ครบอาจทำให้มีข้อมูลไม่เพียงพอ ควรยืนยันผู้ส่งก่อนทำรายการเสมอ</p></details><details><summary>มีชื่อหน่วยงานและโลโก้จริง เชื่อได้หรือไม่?</summary><p>ยังยืนยันไม่ได้ มิจฉาชีพอาจปลอมชื่อผู้ส่งและหน้าตาเว็บไซต์ ตรวจสอบผ่านแอป เว็บไซต์ หรือเบอร์ทางการที่คุณหาเอง</p></details><details><summary>ระบบแจ้งว่ายังประเมินไม่ได้ ควรทำอย่างไร?</summary><p>อย่าตีความว่าไม่มีความเสี่ยง ตรวจสอบผู้ส่งและรายละเอียดผ่านช่องทางทางการ และลองตรวจอีกครั้งเมื่อบริการพร้อม</p></details></div>
+        <p class="guide-source-note">ตรวจสอบแหล่งข้อมูลเมื่อ 4 ตุลาคม 2569 · คำแนะนำนี้ช่วยสังเกตสัญญาณเตือน ไม่ใช่การยืนยันตัวตนของผู้ส่ง</p>
+      </section>
+
+      <dialog id="history-dialog" class="history-dialog"><div class="dialog-heading"><h2>รายงานที่บันทึกไว้</h2><button id="close-history-dialog" class="secondary-button" type="button">ปิด</button></div><div id="history-detail"></div><button id="reuse-history" class="primary-button" type="button">นำข้อความมาตรวจใหม่</button><p class="feature-note">นำข้อความมาเติมในหน้าตรวจสอบ แล้วกดตรวจเพื่อเริ่มวิเคราะห์ใหม่</p></dialog>
+
+      <section id="how-it-works" class="how-section" aria-labelledby="how-title"><div class="how-intro"><span class="step-label">เข้าใจผล ก่อนตัดสินใจ</span><h2 id="how-title">อ่านผลอย่างไร?</h2></div><div class="how-grid"><div><span class="how-number">01</span><h3>ดูความเสี่ยงรวม</h3><p>คะแนนรวมพิจารณาบริบท คำในฐานข้อมูล และผลลิงก์ร่วมกัน สีแสดงระดับต่ำ ปานกลาง หรือสูง</p></div><div><span class="how-number">02</span><h3>ดูเหตุผลและหลักฐาน</h3><p>Gemini วิเคราะห์บริบทได้แม้ไม่พบคำในฐานข้อมูล คุณเปิดดูข้อความอ้างอิงและคะแนนย่อยได้</p></div><div><span class="how-number">03</span><h3>ตรวจสอบต่อให้แน่ใจ</h3><p>คะแนนต่ำหรือไม่พบการตรวจจับลิงก์ไม่ได้รับประกันความปลอดภัย หากยังสงสัยให้ยืนยันกับผู้ส่งผ่านช่องทางที่คุณรู้จัก</p></div></div></section>
+    </main>
+    <footer><span>scamchecker<span class="brand-dot">.</span></span><p>คิดก่อนคลิก ตรวจสอบก่อนเชื่อ</p><span class="footer-label">MADE FOR EVERYDAY SAFETY</span></footer>
+  </div>
+</body>
+</html>

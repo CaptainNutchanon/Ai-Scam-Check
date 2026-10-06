@@ -1,0 +1,33 @@
+# Environment Variables
+.env
+virustotalapi.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Testing & Coverage
+.pytest_cache/
+.test-runtime/
+.coverage
+htmlcov/
+
+# Generated experiment outputs
+gemini_evidence_debug.json
+gemini_vt_results.json
+hybrid_results.json
+scoring_initial_results.json
+scoring_results.json
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
